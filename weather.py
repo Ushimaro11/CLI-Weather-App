@@ -68,25 +68,19 @@ def main():
         return
     current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp = results
 
+    #. Temp Celsius Conversions
+    current_temp_c = round((current_temp - 32) / 1.8, 1)
+    high_temp_c = round((high_temp - 32) / 1.8, 1)
+    low_temp_c = round((low_temp - 32) / 1.8, 1)
+
     print(f"\nWeather for {location_name}, {state}")
-    print(f"\nCurrent Temperature: {current_temp}°F")
+    print(f"\nCurrent Temperature: {current_temp}°F / {current_temp_c}°C")
     if rain > 0 or showers > 0:
         print("It is raining")
     if snow > 0:
         print("it is snowing")
     print(f"Chance of rain: {chance_of_rain}%")
-    print(f"High for the day: {high_temp}°F")
-    print(f"Low for the day: {low_temp}°F\n")
+    print(f"High for the day: {high_temp}°F / {high_temp_c}°C")
+    print(f"Low for the day: {low_temp}°F / {low_temp_c}°C\n")
 
 main()
-
-
-
-
-    
-
-
-
-
-
-
