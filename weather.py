@@ -16,10 +16,15 @@ def get_coordinates(city):
         return None
 
     place = data["results"][0]
-    return place["name"], place.get("admin1", ""), place["latitude"], place["longitude"], place["timezone"]
+    return place["name"], place.get("admin1", ""), place["latitude"], place["longitude"], place["timezone"], place.get("country_code", "")
 
 
-def get_weather(latitude, longitude, timezone):
+def get_weather(latitude, longitude, timezone, country_code):
+    if country_code == "US":
+        temp_unit = "fahrenheit"
+    else:
+        temp_unit = "celsius"
+
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": latitude,
@@ -29,7 +34,7 @@ def get_weather(latitude, longitude, timezone):
         "timezone": timezone,
         "forecast_days": 1,
         "wind_speed_unit": "mph",
-        "temperature_unit": "fahrenheit",
+        "temperature_unit": temp_unit,
         "precipitation_unit": "inch",
     }
     response = requests.get(url, params=params)
@@ -41,8 +46,8 @@ def get_weather(latitude, longitude, timezone):
     return response.json()
 
 
-def parsed_data(latitude, longitude, timezone):
-    data = get_weather(latitude, longitude, timezone)
+def parsed_data(latitude, longitude, timezone, country_code):
+    data = get_weather(latitude, longitude, timezone, country_code)
     if data is None:
         return None
     
@@ -61,26 +66,26 @@ def main():
     if location is None:
         return
 
-    location_name, state, latitude, longitude, timezone = location
+    location_name, state, latitude, longitude, timezone, country_code = location
 
-    results = parsed_data(latitude, longitude, timezone)
+    results = parsed_data(latitude, longitude, timezone, country_code)
     if results is None:
         return
     current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp = results
 
-    #. Temp Celsius Conversions
-    current_temp_c = round((current_temp - 32) / 1.8, 1)
-    high_temp_c = round((high_temp - 32) / 1.8, 1)
-    low_temp_c = round((low_temp - 32) / 1.8, 1)
+    if country_code == "US":
+        temp_format = "°F"
+    else:
+        temp_format = "°C"
 
     print(f"\nWeather for {location_name}, {state}")
-    print(f"\nCurrent Temperature: {current_temp}°F / {current_temp_c}°C")
+    print(f"\nCurrent Temperature: {current_temp}{temp_format}")
     if rain > 0 or showers > 0:
         print("It is raining")
     if snow > 0:
         print("it is snowing")
     print(f"Chance of rain: {chance_of_rain}%")
-    print(f"High for the day: {high_temp}°F / {high_temp_c}°C")
-    print(f"Low for the day: {low_temp}°F / {low_temp_c}°C\n")
+    print(f"High for the day: {high_temp}{temp_format}")
+    print(f"Low for the day: {low_temp}{temp_format}\n")
 
 main()
