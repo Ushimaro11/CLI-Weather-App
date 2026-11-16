@@ -4,7 +4,12 @@ import requests
 def get_coordinates(city):
     url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": city, "count": 1}
-    response = requests.get(url, params=params)
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+    except requests.exceptions.RequestException:
+        print("\nCould not reach the server")
+        return None
 
     if response.status_code != 200:
         print("\nCould not look up location")
@@ -37,7 +42,12 @@ def get_weather(latitude, longitude, timezone, country_code):
         "temperature_unit": temp_unit,
         "precipitation_unit": "inch",
     }
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(url, params=params, timeout=10)
+    except requests.exceptions.RequestException:
+        print("\nCould not reach the server")
+        return None
+    
     if response.status_code != 200:
         print("\nCould not retrieve weather")
         print(f"Status code: {response.status_code}\n")
@@ -58,7 +68,8 @@ def parsed_data(latitude, longitude, timezone, country_code):
     chance_of_rain = data["daily"]["precipitation_probability_max"][0]
     high_temp = data["daily"]["temperature_2m_max"][0]
     low_temp = data["daily"]["temperature_2m_min"][0]
-    return current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp
+    temp_format = data["current_units"]["temperature_2m"]
+    return current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp, temp_format
 
 def main():
     city = input("\nEnter a city: ")
@@ -71,21 +82,27 @@ def main():
     results = parsed_data(latitude, longitude, timezone, country_code)
     if results is None:
         return
-    current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp = results
+    current_temp, rain, showers, snow, chance_of_rain, high_temp, low_temp, temp_format = results
 
-    if country_code == "US":
-        temp_format = "°F"
+    if state:
+        place_name = f"{location_name}, {state}"
     else:
-        temp_format = "°C"
+        place_name = location_name
 
-    print(f"\nWeather for {location_name}, {state}")
+    is_raining = rain > 0 or showers > 0
+    is_snowing = snow > 0
+    
+    print(f"\nWeather for {place_name}")
     print(f"\nCurrent Temperature: {current_temp}{temp_format}")
-    if rain > 0 or showers > 0:
-        print("It is raining")
-    if snow > 0:
-        print("it is snowing")
+    if is_raining and is_snowing:
+        print("Currently raining and snowing")
+    elif is_raining:
+        print("Currently raining")
+    elif is_snowing:
+        print("Currently snowing")
     print(f"Chance of rain: {chance_of_rain}%")
     print(f"High for the day: {high_temp}{temp_format}")
     print(f"Low for the day: {low_temp}{temp_format}\n")
 
-main()
+if __name__ == "__main__":
+    main()
